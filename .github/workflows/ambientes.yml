@@ -1,0 +1,42 @@
+name: Ambientes - Validacao e Aprovacao
+
+# Demonstra ambientes protegidos. Nao realiza deploy real.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ambientes-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    name: Validacao em staging
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Executar testes
+        run: npm run test:run
+      - name: Registrar homologacao
+        run: echo 'Validado em staging (sem deploy real).'
+  production:
+    name: Aprovacao para production
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - name: Registrar gate
+        run: echo 'Aprovacao de production; sem deploy real.'
